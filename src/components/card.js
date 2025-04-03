@@ -1,16 +1,12 @@
-// @todo: Темплейт карточки
+// src/components/card.js
+import { openModal} from './modal.js';
+
 const cardTemplate = document
   .querySelector("#card-template")
   .content.querySelector(".card");
 
-// @todo: DOM узлы
-// Находим вёрстку списка и шаблон
-const placesList = document.querySelector(".places__list");
-
-// @todo: Функция создания карточки
-
 // Функция для создания карточки
-function createCard({ name, link }, onDelete) {
+export function createCard({ name, link }, onDelete, onLike, onImgClick) {
   // Клонируем структуру шаблона
   const cardElement = cardTemplate.cloneNode(true);
 
@@ -18,6 +14,8 @@ function createCard({ name, link }, onDelete) {
   const cardImage = cardElement.querySelector(".card__image");
   const cardTitle = cardElement.querySelector(".card__title");
   const deleteButton = cardElement.querySelector(".card__delete-button");
+
+  const likeButton = cardElement.querySelector(".card__like-button");
 
   // Устанавливаем данные
   cardImage.src = link;
@@ -29,19 +27,35 @@ function createCard({ name, link }, onDelete) {
     onDelete(cardElement);
   });
 
+  // Добавляем слушатель для удаления
+  likeButton.addEventListener("click", () => {
+    onLike(likeButton);
+  });
+
+  cardImage.addEventListener("click", () => {
+    onImgClick(name, link);
+  });
+
   // Возвращаем готовую карточку
   return cardElement;
 }
 
 // @todo: Функция удаления карточки
 // Функция для удаления карточки
-function handleDeleteCard(cardElement) {
+export function handleDeleteCard(cardElement) {
   cardElement.remove();
 }
 
-// @todo: Вывести карточки на страницу
-// Выводим все карточки на страницу, используя initialCards
-initialCards.forEach((cardData) => {
-  const newCard = createCard(cardData, handleDeleteCard);
-  placesList.append(newCard);
-});
+export function handleLikeCard(likeButton) {
+  likeButton.classList.toggle("card__like-button_is-active");
+};
+
+export function showImagePopup(name, link){
+  const typeImagePopup = document.querySelector(".popup_type_image");
+  const img = typeImagePopup.querySelector("img");
+
+  img.src = link;
+  typeImagePopup.querySelector(".popup__caption").textContent = name;
+
+  openModal(typeImagePopup);
+};
