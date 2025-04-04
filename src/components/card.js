@@ -1,5 +1,4 @@
 // src/components/card.js
-import { openModal} from './modal.js';
 
 const cardTemplate = document
   .querySelector("#card-template")
@@ -50,12 +49,3 @@ export function handleLikeCard(likeButton) {
   likeButton.classList.toggle("card__like-button_is-active");
 };
 
-export function showImagePopup(name, link){
-  const typeImagePopup = document.querySelector(".popup_type_image");
-  const img = typeImagePopup.querySelector("img");
-
-  img.src = link;
-  typeImagePopup.querySelector(".popup__caption").textContent = name;
-
-  openModal(typeImagePopup);
-};
