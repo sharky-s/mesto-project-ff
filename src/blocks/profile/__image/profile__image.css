@@ -20,3 +20,20 @@
     margin-right: 0;
   }
 }
+
+.profile__image-edit-button {
+  width: 120px;
+  height: 120px;
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5) url("../../../images/edit-icon.svg") center/20px 20px no-repeat;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.3s;
+  opacity: 0;
+  top: 36px;
+}
+
+.profile__image:hover .profile__image-edit-button {
+  opacity: 1;
+}

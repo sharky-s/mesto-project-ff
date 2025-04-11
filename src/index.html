@@ -16,7 +16,9 @@
   <main class="content">
     <section class="profile page__section">
       <% const avatar = require('./images/avatar.jpg'); %>
-      <div class="profile__image" style="background-image: url('<%= avatar %>');"></div>  
+      <div class="profile__image" style="background-image: url('<%= avatar %>');">
+        <button type="button" class="profile__image-edit-button"></button>
+      </div> 
       <div class="profile__info">
         <h1 class="profile__title">Жак-Ив Кусто</h1>
         <button class="profile__edit-button" type="button"></button>
@@ -38,9 +40,11 @@
     <div class="popup__content">
       <button type="button" class="popup__close"></button>
       <h3 class="popup__title">Редактировать профиль</h3>
-      <form class="popup__form" name="edit-profile">
-        <input type="text" name="name" class="popup__input popup__input_type_name" placeholder="Имя" required>
-        <input type="text" name="description" class="popup__input popup__input_type_description" placeholder="Занятие" required>
+      <form class="popup__form" name="edit-profile" novalidate>
+        <input type="text" name="name" class="popup__input popup__input_type_name" placeholder="Имя" required maxlength="40" minlength="2">
+        <span class="popup__input-error"></span>
+        <input type="text" name="description" class="popup__input popup__input_type_description" placeholder="Занятие" required maxlength="200" minlength="2">
+        <span class="popup__input-error"></span>
         <button type="submit" class="button popup__button">Сохранить</button>
       </form>
     </div>
@@ -49,9 +53,11 @@
     <div class="popup__content">
       <button type="button" class="popup__close"></button>
       <h3 class="popup__title">Новое место</h3>
-      <form class="popup__form" name="new-place">
-        <input type="text" name="place-name" class="popup__input popup__input_type_card-name" placeholder="Название" required>
+      <form class="popup__form" name="new-place" novalidate>
+        <input type="text" name="place-name" class="popup__input popup__input_type_card-name" placeholder="Название" required maxlength="30" minlength="2">
+        <span class="popup__input-error"></span>
         <input type="url" name="link" class="popup__input popup__input_type_url" placeholder="Ссылка на картинку" required>
+        <span class="popup__input-error"></span>
         <button type="submit" class="button popup__button">Сохранить</button>
       </form>
     </div>
@@ -64,6 +70,34 @@
     </div>
   </div>
 </div>
+
+<div class="popup popup_type_avatar popup_is-animated">
+  <div class="popup__content">
+    <button type="button" class="popup__close"></button>
+    <form class="popup__form" name="avatar-form" novalidate>
+      <h2 class="popup__title">Обновить аватар</h2>
+      <input
+        type="url"
+        name="avatar"
+        class="popup__input popup__input_type_url"
+        placeholder="Ссылка на картинку"
+        required
+      />
+      <span class="popup__input-error"></span>
+      <button type="submit" class="popup__button button">Сохранить</button>
+    </form>
+  </div>
+</div>
+
+<div class="popup popup_is-animated popup_type_delete-card">
+  <div class="popup__content">
+    <button type="button" class="popup__close"></button>
+    <h3 class="popup__title">Вы уверены?</h3>
+    <form class="popup__form" name="delete-card-form">
+      <button type="submit" class="button popup__button">Да</button>
+    </form>
+  </div>
+</div>
 <!-- <script src="./scripts/cards.js"></script>
 <script src="./scripts/index.js" defer></script> -->
 
@@ -72,9 +106,11 @@
     <img class="card__image" src="" alt="" />
     <button type="button" class="card__delete-button"></button>
     <div class="card__description">
-      <h2 class="card__title">
-      </h2>
-      <button type="button" class="card__like-button"></button>
+      <h2 class="card__title"></h2>
+      <div class="card__like-container">
+        <button type="button" class="card__like-button"></button>
+        <span class="card__like-count">0</span>
+      </div>
     </div>
   </li>
 </template>
