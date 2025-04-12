@@ -78,25 +78,42 @@ let currentUserId; // <-- добавляем сюда
 typeEditPopupNameInput.value = profileTitle.textContent;
 typeEditPopupAboutInput.value = profileDescription.textContent;
 
-let customValidations = new Map();
-customValidations.set(typeEditPopupNameInput, textValidation);
-customValidations.set(typeEditPopupAboutInput, textValidation);
-customValidations.set(typeNewCardPopupNameInput, textValidation);
+const validationConfig = {
+  formSelector: '.popup__form',
+  inputSelector: '.popup__input',
+  submitButtonSelector: '.popup__button',
+  inactiveButtonClass: 'popup__button_disabled',
+  inputErrorClass: 'popup__input_type_error',
+  errorClass: 'popup__error_visible'
+};
 
-function textValidation(inputElement) {
+// Настройка кастомных валидаций
+let customValidations = new Map();
+customValidations.set(typeEditPopupNameInput, validateText);
+customValidations.set(typeEditPopupAboutInput, validateText);
+customValidations.set(typeNewCardPopupNameInput, validateText);
+
+function validateText(inputElement) {
   const regex = /^[a-zA-Zа-яА-ЯёЁ \-]+$/;
   const errorMessage =
     "Разрешены только латинские, кириллические буквы, знаки дефиса и пробелы";
   return validateRegex(inputElement, regex, errorMessage);
 }
 
-enableValidation(customValidations);
+// Включаем валидацию с передачей настроек
+enableValidation(validationConfig, customValidations);
+
+// Обновление вызова clearValidation
+editButton.addEventListener("click", function () {
+  fillEditPopup(profileTitle.textContent, profileDescription.textContent);
+  clearValidation(typeEditPopupFormElement, validationConfig);
+  openModal(typeEditPopup);
+});
+
 
 popups.forEach((popup) => {
   setupClosePopupByOverlay(popup);
 });
-
-// @todo: Функция создания карточки
 
 function showImagePopup(name, link) {
   typeImagePopupImg.src = link;
@@ -104,44 +121,10 @@ function showImagePopup(name, link) {
 
   openModal(typeImagePopup);
 }
-// @todo: Вывести карточки на страницу
-// Выводим все карточки на страницу, используя initialCards
-// initialCards.forEach((cardData) => {
-//   const newCard = createCard(
-//     cardData,
-//     handleDeleteCard,
-//     handleLikeCard,
-//     showImagePopup
-//   );
-//   placesList.append(newCard);
-// });
-
-// popupForm(typeEditPopup, profileTitle, profileDescription);
-
-editButton.addEventListener("click", function () {
-  fillEditPopup(profileTitle.textContent, profileDescription.textContent);
-  clearValidation(typeEditPopupFormElement, {
-    formSelector: ".popup__form",
-    inputSelector: ".popup__input",
-    submitButtonSelector: ".popup__button",
-    inactiveButtonClass: "popup__button_disabled",
-    inputErrorClass: "popup__input_type_error",
-    errorClass: "popup__error_visible",
-  });
-  openModal(typeEditPopup);
-});
-
-// popupCardForm(typeNewCardPopup, initialCards, placesList);
 
 newCardButton.addEventListener("click", function () {
   openModal(typeNewCardPopup);
 });
-
-// imageButtons.forEach((button) => {
-//   button.addEventListener("click", function () {
-//     openModal(typeImagePopup);
-//   });
-// });
 
 closeButtons.forEach((button) => {
   button.addEventListener("click", function () {
@@ -154,65 +137,6 @@ function fillEditPopup(name, about) {
   typeEditPopupNameInput.value = name;
   typeEditPopupAboutInput.value = about;
 }
-
-//РАБОТА С ФОРМАМИ
-
-// function handleProfileFormSubmit(evt) {
-//   evt.preventDefault();
-
-//   const name = typeEditPopupNameInput.value;
-//   const job = typeEditPopupAboutInput.value;
-
-//   profileTitle.textContent = name;
-//   profileDescription.textContent = job;
-
-//   closeModal(typeEditPopup);
-// }
-
-// function handleCardFormSubmit(evt) {
-//   evt.preventDefault();
-//   const cardData = {
-//     name: typeNewCardPopupNameInput.value,
-//     link: typeNewCardPopupUrlInput.value,
-//   };
-
-//   const newCard = createCard(
-//     cardData,
-//     handleDeleteCard,
-//     handleLikeCard,
-//     showImagePopup
-//   );
-//   placesList.prepend(newCard);
-
-//   closeModal(typeNewCardPopup);
-//   clearValidation(
-//     typeEditPopupFormElement,
-//     {
-//       formSelector: '.popup__form',
-//       inputSelector: '.popup__input',
-//       submitButtonSelector: '.popup__button',
-//       inactiveButtonClass: 'popup__button_disabled',
-//       inputErrorClass: 'popup__input_type_error',
-//       errorClass: 'popup__error_visible'
-//     }
-//   );
-//   typeNewCardPopupNameInput.value = "";
-//   typeNewCardPopupUrlInput.value = "";
-// }
-
-// getUserInfo().then(data => {
-//   console.log(data);
-//   profileTitle.textContent = data.name;
-//   profileDescription.textContent = data.about;
-//   profileImg.style = `background-image: url(${data.avatar})`;
-//   typeEditPopupNameInput.value = data.name;
-//   typeEditPopupAboutInput.value = data.about;
-// })
-// .catch(err => {
-//   console.error(err);
-// });
-
-// ДОБАВЛЯЕМ Promise.all
 
 Promise.all([getUserInfo(), getInitialCards()]).then(([userData, cards]) => {
   currentUserId = userData._id;
@@ -241,7 +165,7 @@ Promise.all([getUserInfo(), getInitialCards()]).then(([userData, cards]) => {
 
 function handleProfileFormSubmit(evt) {
   evt.preventDefault();
-  const submitButton = typeEditPopupFormElement.querySelector(".popup__button");
+  const submitButton = evt.submitter;
   renderLoading(true, submitButton, "Сохранить");
 
   const name = typeEditPopupNameInput.value;
@@ -274,7 +198,11 @@ function handleCardFormSubmit(evt) {
     .then((cardData) => {
       const newCard = createCard(
         cardData,
-        handleDeleteCard,
+        (cardElement, cardId) => {
+          cardToDelete = cardElement;
+          cardIdToDelete = cardId;
+          openModal(deleteCardPopup);
+        },
         handleLikeCard,
         showImagePopup,
         currentUserId
@@ -282,17 +210,9 @@ function handleCardFormSubmit(evt) {
       placesList.prepend(newCard);
 
       closeModal(typeNewCardPopup);
-      clearValidation(typeNewCardPopupFormElement, {
-        formSelector: ".popup__form",
-        inputSelector: ".popup__input",
-        submitButtonSelector: ".popup__button",
-        inactiveButtonClass: "popup__button_disabled",
-        inputErrorClass: "popup__input_type_error",
-        errorClass: "popup__error_visible",
-      });
+      clearValidation(typeNewCardPopupFormElement, validationConfig);
 
-      typeNewCardPopupNameInput.value = "";
-      typeNewCardPopupUrlInput.value = "";
+      evt.target.reset()
     })
     .catch((err) => {
       console.error(`Ошибка при добавлении карточки: ${err}`);
@@ -326,6 +246,7 @@ function handleAvatarFormSubmit(evt) {
       profileImg.style.backgroundImage = `url(${userData.avatar})`;
       closeModal(avatarPopup);
       avatarFormElement.reset();
+      clearValidation(typeNewCardPopupFormElement, validationConfig);
     })
     .catch((err) => {
       console.error(`Ошибка при обновлении аватара: ${err}`);
@@ -333,6 +254,8 @@ function handleAvatarFormSubmit(evt) {
     .finally(() => {
       renderLoading(false, submitButton, "Сохранить");
     });
+
+    
 }
 
 avatarFormElement.addEventListener("submit", handleAvatarFormSubmit);

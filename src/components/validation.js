@@ -1,47 +1,51 @@
-// Функция isValid теперь принимает formElement и inputElement,
-// а не берёт их из внешней области видимости
-
-const isValid = (formElement, inputElement, customValidation) => {
+// Функция isValid теперь принимает formElement, inputElement, настройки и customValidation
+const isValid = (formElement, inputElement, validationConfig, customValidation) => {
   if (!inputElement.validity.valid) {
-    // showInputError теперь получает параметром форму, в которой
-    // находится проверяемое поле, и само это поле
-    showInputError(formElement, inputElement, inputElement.validationMessage);
+    // showInputError теперь получает параметром форму, настройки валидации,
+    // поле и сообщение об ошибке
+    showInputError(formElement, inputElement, validationConfig, inputElement.validationMessage);
   } else if (customValidation && customValidation(inputElement)){
-    // showInputError теперь получает параметром форму, в которой
-    // находится проверяемое поле, и само это поле
-    showInputError(formElement, inputElement, customValidation(inputElement));
+    // showInputError теперь получает параметром форму, настройки валидации,
+    // поле и сообщение об ошибке
+    showInputError(formElement, inputElement, validationConfig, customValidation(inputElement));
   }
   else{
-    // hideInputError теперь получает параметром форму, в которой
-    // находится проверяемое поле, и само это поле
-    hideInputError(formElement, inputElement);
+    // hideInputError теперь получает параметром форму, настройки валидации и поле
+    hideInputError(formElement, inputElement, validationConfig);
   }
 };
 
-const showInputError = (formElement, inputElement, errorMessage) => {
+// Обновленная функция showInputError теперь использует селекторы из validationConfig
+const showInputError = (formElement, inputElement, validationConfig, errorMessage) => {
   // Находим элемент ошибки внутри самой функции
   const errorElement = inputElement.nextElementSibling;
-  // Остальной код такой же
-  inputElement.classList.add('form__input_type_error');
+  // Добавляем класс ошибки из конфигурации
+  inputElement.classList.add(validationConfig.inputErrorClass);
   errorElement.textContent = errorMessage;
+  // Показываем сообщение об ошибке, используя класс из конфигурации
+  errorElement.classList.add(validationConfig.errorClass);
 };
 
-const hideInputError = (formElement, inputElement) => {
+// Обновленная функция hideInputError теперь использует селекторы из validationConfig
+const hideInputError = (formElement, inputElement, validationConfig) => {
   // Находим элемент ошибки
   const errorElement = inputElement.nextElementSibling;
-  // Остальной код такой же
-  inputElement.classList.remove('form__input_type_error');
+  // Удаляем класс ошибки, используя класс из конфигурации
+  inputElement.classList.remove(validationConfig.inputErrorClass);
   errorElement.textContent = '';
+  // Скрываем сообщение об ошибке, используя класс из конфигурации
+  errorElement.classList.remove(validationConfig.errorClass);
 };
 
-
-const setEventListeners = (formElement, customValidations) => {
-  // Находим все поля внутри формы
-  const inputList = Array.from(formElement.querySelectorAll('.popup__input'));
+// Обновленная функция setEventListeners теперь использует селекторы из validationConfig
+const setEventListeners = (formElement, validationConfig, customValidations) => {
+  // Находим все поля внутри формы, используя селектор из конфигурации
+  const inputList = Array.from(formElement.querySelectorAll(validationConfig.inputSelector));
 
   // Функция, которая проверяет валидность всех полей и включает/выключает кнопку «Сохранить»
   const checkFormState = () => {
-    const submitButton = formElement.querySelector('.popup__button');
+    // Используем селектор кнопки из конфигурации
+    const submitButton = formElement.querySelector(validationConfig.submitButtonSelector);
     const isFormValid = inputList.every(inputElement => {
       let customValidation = null;
       if (customValidations.has(inputElement)) {
@@ -50,7 +54,15 @@ const setEventListeners = (formElement, customValidations) => {
       // Если у поля есть кастомная валидация, оно считается валидным, если функция возвращает null
       return inputElement.validity.valid && (!customValidation || customValidation(inputElement) === null);
     });
-    submitButton.disabled = !isFormValid;
+
+    // Обрабатываем состояние кнопки с использованием класса неактивной кнопки из конфигурации
+    if (isFormValid) {
+      submitButton.disabled = false;
+      submitButton.classList.remove(validationConfig.inactiveButtonClass);
+    } else {
+      submitButton.disabled = true;
+      submitButton.classList.add(validationConfig.inactiveButtonClass);
+    }
   };
 
   // Назначаем обработчик события input для каждого поля
@@ -60,8 +72,8 @@ const setEventListeners = (formElement, customValidations) => {
       if (customValidations.has(inputElement)) {
         customValidation = customValidations.get(inputElement);
       }
-      // Проверяем текущее поле
-      isValid(formElement, inputElement, customValidation);
+      // Проверяем текущее поле, передавая настройки валидации
+      isValid(formElement, inputElement, validationConfig, customValidation);
       // Проверяем всю форму и обновляем состояние кнопки
       checkFormState();
     });
@@ -71,23 +83,19 @@ const setEventListeners = (formElement, customValidations) => {
   checkFormState();
 };
 
-
-
-export const enableValidation = (customValidations) => {
-  // Найдём все формы с указанным классом в DOM,
+// Обновленная функция enableValidation теперь принимает validationConfig и передает его в другие функции
+export const enableValidation = (validationConfig, customValidations = new Map()) => {
+  // Найдём все формы с указанным классом в DOM из конфигурации,
   // сделаем из них массив методом Array.from
-  const formList = Array.from(document.querySelectorAll('.popup__form'));
+  const formList = Array.from(document.querySelectorAll(validationConfig.formSelector));
 
   // Переберём полученную коллекцию
   formList.forEach((formElement) => {
     // Для каждой формы вызовем функцию setEventListeners,
-    // передав ей элемент формы
-    setEventListeners(formElement, customValidations);
+    // передав ей элемент формы и настройки валидации
+    setEventListeners(formElement, validationConfig, customValidations);
   });
 };
-
-// // Вызовем функцию
-// enableValidation();
 
 export function validateRegex(inputElement, regex, errorMessage) {
   if (regex.test(inputElement.value)) {
@@ -103,23 +111,13 @@ export function clearValidation(formElement, validationConfig) {
   
   // Для каждого input-элемента очищаем состояние ошибки
   inputList.forEach(inputElement => {
-    // Сбрасываем состояние ошибки через существующую функцию
-    hideInputError(formElement, inputElement);
-    
-    // Убираем класс ошибки, заданный в конфигурации
-    inputElement.classList.remove(validationConfig.inputErrorClass);
-    
-    // Если рядом с input находится блок с сообщением об ошибке, очищаем его
-    const errorElement = inputElement.nextElementSibling;
-    if (errorElement) {
-      errorElement.textContent = '';
-      errorElement.classList.remove(validationConfig.errorClass);
-    }
+    // Сбрасываем состояние ошибки через существующую функцию, передавая настройки валидации
+    hideInputError(formElement, inputElement, validationConfig);
   });
   
   // Находим кнопку отправки с использованием селектора из конфигурации
   const submitButton = formElement.querySelector(validationConfig.submitButtonSelector);
-  // Делаем кнопку неактивной и добавляем CSS-класс для неактивного состояния
+  // Делаем кнопку неактивной и добавляем CSS-класс для неактивного состояния из конфигурации
   submitButton.disabled = true;
   submitButton.classList.add(validationConfig.inactiveButtonClass);
 }
